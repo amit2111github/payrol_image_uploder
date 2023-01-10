@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Upload Image</title>
+</head>
+<body>
+	<input type = "file" placeholder="Select File to upload" id = "file"/>
+	<button id = "upload">Upload</button>
+	<!-- signed url or s3 object -->
+	<!-- <img src = "https://amit-demo-bucket-1.s3.amazonaws.com/image.avif?AWSAccessKeyId=AKIAYJMSERZFVXKAG3F4&Expires=1670929665&Signature=bRHxWvz%2B%2BWc91gdUMjTN7CMUG88%3D" width="200" height="200px" alt = "an image" />  -->
+
+	<script type="text/javascript">
+		document.getElementById("upload").addEventListener("click" ,() => {
+			const data = document.getElementById("file").files[0];
+			if(!data) return;
+			const formData = new FormData();
+			formData.append('myFile', data);
+			fetch("http://localhost:3000/upload", {
+				method : "POST",
+				body : formData
+			}).then(res => res.json())
+			.then(res => alert(res))
+			.catch(err => alert(err));
+		});
+	</script>
+</body>
+
+</html>

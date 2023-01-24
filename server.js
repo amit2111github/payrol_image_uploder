@@ -1,6 +1,12 @@
 const app = require("express")();
+var bodyParser = require("body-parser");
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 const fileUpload = require("express-fileupload");
+const { v4: uuidv4 } = require("uuid");
+const cors = require("cors");
 app.use(fileUpload());
+app.use(cors());
 require("dotenv").config();
 const aws = require("aws-sdk");
 const region = "us-east-1";
@@ -12,55 +18,52 @@ const secretAccessKey = process.env.SECRET_ACCESS_KEY;
 aws.config.update({ region, accessKeyId, secretAccessKey });
 
 const s3 = new aws.S3();
-
-// app.get("/create/:name", (req, res) => {
-// 	const { name } = req.params;
-// 	s3.createBucket({ Bucket: name }, (err, data) => {
-// 		if (err) {
-// 			console.log(err);
-// 			return res.json({ error: "failed to create bucker" });
-// 		}
-
-// 		return res.json(data);
-// 	});
-// });
-
-// app.get("/delete/:name", (req, res) => {
-// 	const { name } = req.params;
-// 	s3.deleteBucket({ Bucket: name }, (err, data) => {
-// 		if (err) {
-// 			console.log(err);
-// 			return res.json({ error: "failed to delete bucker" });
-// 		}
-// 		return res.json(data);
-// 	});
-// });
+const uniqueString = () => {};
 
 app.post("/upload", (req, res) => {
-	const file = req.files.myFile;
-	console.log(file);
-	const Bucket = "payrool";
-	s3.upload({ Bucket, Key: file.name, Body: file.data }, (err, data) => {
-		if (err) return res.json({ error: "Failed to Upload file", msg: err });
-		// console.log(data.Location);
-		return res.json({ url: data.Location });
-	});
+	try {
+		const file = req.files.myFile;
+		// console.log(file);
+		const Bucket = "payrool";
+		s3.upload(
+			{ Bucket, Key: uuidv4() + file.name, Body: file.data },
+			(err, data) => {
+				if (err)
+					return res.json({
+						error: "Failed to Upload file",
+						msg: err,
+					});
+				console.log(data.Location);
+				return res.json({ url: data.Location });
+			}
+		);
+	} catch (err) {
+		return res.json({ error: "Failed to Upload Image" });
+	}
 });
 
-// app.post("/view/", (req, res) => {
-// 	console.log("inside 1");
-// 	const Bucket = "amit-demo-bucket-1";
-// 	const { Key } = req.body;
-// 	const Expires = 60 * 5;
-// 	s3.getSignedUrl("getObject", { Bucket, Key, Expires }, (err, data) => {
-// 		if (err) {
-// 			console.log(err);
-// 			return res.json({ error: "failed to create signed bucker" });
-// 		}
-// 		const ws = fs.createReadStream(data);
-// 		ws.pipe(res);
-// 	});
-// });
+app.post("/signed-url", (req, res) => {
+	try {
+		const Bucket = "payrool";
+		// console.log(req.body.Key);
+		let Key = req.body.Key;
+		if (!Key) return res.json({ url: "" });
+		Key = Key.substring(33);
+
+		// console.log(Key);
+		const Expires = 60 * 5;
+		s3.getSignedUrl("getObject", { Bucket, Key, Expires }, (err, data) => {
+			if (err) {
+				console.log(err);
+				return res.json({ error: "failed to create signed bucker" });
+			}
+			return res.json({ url: data });
+		});
+	} catch (err) {
+		console.log(err);
+		return res.json({ error: "Failed to get signed url" });
+	}
+});
 
 const server = app.listen(process.env.PORT || 5000, () => {
 	console.log(`Listening on port ${server.address().port}`);

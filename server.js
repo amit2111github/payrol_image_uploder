@@ -20,6 +20,9 @@ aws.config.update({ region, accessKeyId, secretAccessKey });
 const s3 = new aws.S3();
 const uniqueString = () => {};
 
+app.get("/test", (req, res) => {
+	return res.send("Working fine.");
+});
 app.post("/upload", (req, res) => {
 	try {
 		const file = req.files.myFile;
@@ -65,6 +68,6 @@ app.post("/signed-url", (req, res) => {
 	}
 });
 
-const server = app.listen(process.env.PORT || 5000, () => {
+const server = app.listen(process.env.PORT || 6000, () => {
 	console.log(`Listening on port ${server.address().port}`);
 });
